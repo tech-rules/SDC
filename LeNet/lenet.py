@@ -18,7 +18,7 @@ from tensorflow.examples.tutorials.mnist import input_data
 from tensorflow.contrib.layers import flatten
 
 
-EPOCHS = 10
+EPOCHS = 100
 BATCH_SIZE = 50
 n_classes = 10  # MNIST total classes (0-9 digits)
 
@@ -28,35 +28,42 @@ n_classes = 10  # MNIST total classes (0-9 digits)
 # Don't worry about anything else in the file too much, all you have to do is
 # create the LeNet and return the result of the last fully connected layer.
 def conv2d(x, W, b, strides=1, k=2):
-    # Conv2D wrapper, with bias, relu activation, and max pooling
+    """
+    Conv2D wrapper, with bias, relu activation, and max pooling
+    """
     x = tf.nn.conv2d(x, W, strides=[1, strides, strides, 1], padding='VALID')
     x = tf.nn.bias_add(x, b)
     x = tf.nn.relu(x)
     return tf.nn.max_pool(x, [1, k, k, 1], [1, k, k,1], padding='SAME')
 
 def LeNet(x):
+    """
+    LeNet implementation
+    """
     # Reshape from 2D to 4D. This prepares the data for
     # convolutional and pooling layers.
     x = tf.reshape(x, (-1, 28, 28, 1))
     # Pad 0s to 32x32. Centers the digit further.
     # Add 2 rows/columns on each side for height and width dimensions.
     x = tf.pad(x, [[0, 0], [2, 2], [2, 2], [0, 0]], mode="CONSTANT")
-    # TODO: Define the LeNet architecture.
+    # Define depth of each hidden layer
     layer_depth = {
       'layer_1': 6,
       'layer_2': 16,
       'fully_connected': 120
     }
+    # Initialized weights to small random numbers, 0 mean, 0.01 stddev
     weights = {
       'layer_1': tf.Variable(tf.truncated_normal(
-          [5, 5, 1, layer_depth['layer_1']])),
+          [5, 5, 1, layer_depth['layer_1']], stddev=0.01)),
       'layer_2': tf.Variable(tf.truncated_normal(
-          [5, 5, layer_depth['layer_1'], layer_depth['layer_2']])),
+          [5, 5, layer_depth['layer_1'], layer_depth['layer_2']], stddev=0.01)),
       'fully_connected': tf.Variable(tf.truncated_normal(
-          [5*5*16, layer_depth['fully_connected']])),
+          [5*5*16, layer_depth['fully_connected']], stddev=0.01)),
       'out': tf.Variable(tf.truncated_normal(
-          [layer_depth['fully_connected'], n_classes]))
+          [layer_depth['fully_connected'], n_classes], stddev=0.01))
     }
+    # Initialize biases to zero
     biases = {
       'layer_1': tf.Variable(tf.zeros(layer_depth['layer_1'])),
       'layer_2': tf.Variable(tf.zeros(layer_depth['layer_2'])),
@@ -67,7 +74,7 @@ def LeNet(x):
     conv2 = conv2d(conv1, weights['layer_2'], biases['layer_2'])
     flat = tf.contrib.layers.flatten(conv2)
     fc1 = tf.add(tf.matmul(flat, weights['fully_connected']), biases['fully_connected'])
-    fc1 = tf.nn.tanh(fc1)
+    fc1 = tf.nn.tanh(fc1) # tanh gave better result than relu, for fc1
     # Return the result of the last fully connected layer.
     return tf.add(tf.matmul(fc1, weights['out']), biases['out'])
 
